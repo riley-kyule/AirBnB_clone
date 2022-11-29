@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov 29 08:26:07 2022
-@author: Robinson Montes
-         Carlos Murcia
+@author: Biruke Sisay
+         Phillip Kyule
 """
 from models.base_model import BaseModel
 
@@ -14,12 +14,3 @@ class State(BaseModel):
         name (str): Public class attribute for State's name
     """
     name = ""
-
-    def __init__(self, *args, **kwargs):
-        """init method for State class
-        Attributes:
-            args (list): The list with arguments
-            kwargs (dict): A dictionary with arguments
-        """
-        super().__init__(*args, **kwargs)
-        
