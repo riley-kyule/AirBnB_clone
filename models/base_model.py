@@ -3,18 +3,17 @@
 """
 Creation date: Nov 25, 2022
 Authors: Biruke sisay
-        Phillip kyule
+        Phillip Kyule
 """
 from uuid import uuid
 from datetime import datetime
-
-import models
 
 
 class BaseModel:
     """
     base_model that defines all common attributes/methods for other classes
     """
+
     def __init__(self, *args, **kwargs):
 
         """init method for BaseModel Class
@@ -28,38 +27,26 @@ class BaseModel:
                 n instance is created and it will be updated every time you
                 change your object.
         """
-        super().__init__()
-        self.id = str(uuid4())
-        self.created_at = self.updated_at = datetime.now()
 
+        from models import storage
         if not kwargs:
-            models.storage.new(self)
-
-        for k, v in kwargs.items():
-            if k == "created_at" or k == "updated_at":
-                v = datetime.strptime(v, "%Y-%m-%dT%H:%M:%S.%f")
-            if k != "__class__":
-                setattr(self, k, v)
-
-        if len(kwargs) > 0:
-            for k, v in kwargs.items():
-                if k in ['created_at', 'updated_at']:
-                    self.__dict__[k] = datetime\
-                                       .strptime(v, '%Y-%m-%dT%H:%M:%S.%f')
-                elif k == 'id':
-                    self.id = v
-                else:
-            self.id = str(uuid.uuid4())
-            self.created_at = datetime.now()
-            self.updated_at = datetime.now()
-            models.storage.new(self)
-
+            self.id = str(uuid4())
+            self.created_at = self.updated_at = datetime.now()
+            storage.new(self)
+        else:
+            for key, value in kwargs.items():
+                if key != '__class__':
+                    if key in ('created_at', 'updated_at'):
+                        setattr(self, key, datetime.fromisoformat(value))
+                    else:
+                        setattr(self, key, value)
     def __str__(self):
-        """str method for BaseModel Class
+        """
+        String Rep of a BaseModel Object
             Return:
                 string (str): string descriptor for BaseModel Class
         """
-        return "[{}] ({}) {}".format(self.__class__.__name__, self.id,
+        return "[{}] ({}) {}".format(type(self).__name__, self.id,
                                      self.__dict__)
 
     def save(self):
@@ -67,8 +54,10 @@ class BaseModel:
         updates the public instance attribute updated_at with the
         current datetime
         """
+
+        from models import storage
         self.updated_at = datetime.now()
-        models.storage.save()
+        storage.save()
 
     def to_dict(self):
         """returns a dictionary containing all keys/values of __dict__
@@ -76,8 +65,11 @@ class BaseModel:
         Return:
             dictionary (dict): Dictionary object that contains __dict__
         """
-        dictionary = self.__dict__.copy()
-        dictionary["created_at"] = self.created_at.isoformat()
-        dictionary["updated_at"] = self.updated_at.isoformat()
-        dictionary["__class__"] = self.__class__.__name__
-        return 
+
+        dict_1 = self.__dict__.copy()
+        dict_1["__class__"] = self.__class__.__name__
+        for k, v in self.__dict__.items():
+            if k in ("created_at", "updated_at"):
+                v = self.__dict__[k].isoformat()
+                dict_1[k] = v
+        retuen dict_1
