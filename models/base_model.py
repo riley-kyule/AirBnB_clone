@@ -5,8 +5,9 @@ Creation date: Nov 25, 2022
 Authors: Biruke sisay
         Phillip kyule
 """
-import uuid
+from uuid import uuid
 from datetime import datetime
+
 import models
 
 
@@ -15,6 +16,7 @@ class BaseModel:
     base_model that defines all common attributes/methods for other classes
     """
     def __init__(self, *args, **kwargs):
+
         """init method for BaseModel Class
         Attributes:
             args (list): inputted arguments as a list.
@@ -26,6 +28,19 @@ class BaseModel:
                 n instance is created and it will be updated every time you
                 change your object.
         """
+        super().__init__()
+        self.id = str(uuid4())
+        self.created_at = self.updated_at = datetime.now()
+
+        if not kwargs:
+            models.storage.new(self)
+
+        for k, v in kwargs.items():
+            if k == "created_at" or k == "updated_at":
+                v = datetime.strptime(v, "%Y-%m-%dT%H:%M:%S.%f")
+            if k != "__class__":
+                setattr(self, k, v)
+
         if len(kwargs) > 0:
             for k, v in kwargs.items():
                 if k in ['created_at', 'updated_at']:
