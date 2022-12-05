@@ -1,75 +1,60 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
+"""Module for Base class
+Contains the Base class for the AirBnB clone console.
 """
-Creation date: Nov 25, 2022
-Authors: Biruke sisay
-        Phillip Kyule
-"""
-from uuid import uuid
+
+import uuid
 from datetime import datetime
+from models import storage
 
 
 class BaseModel:
-    """
-    base_model that defines all common attributes/methods for other classes
-    """
+
+    """Class for base model of object hierarchy."""
 
     def __init__(self, *args, **kwargs):
+        """Initialization of a Base instance.
 
-        """init method for BaseModel Class
-        Attributes:
-            args (list): inputted arguments as a list.
-            kwargs (dict): inputted arguments as a dict.
-            id (str) - assign with an uuid when an instance is created.
-            created_at (time): datetime - assign with the current datetime when
-                an instance is created.
-            updated_at (time): datetime - assign with the current datetime when
-                n instance is created and it will be updated every time you
-                change your object.
+        Args:
+            - *args: list of arguments
+            - **kwargs: dict of key-values arguments
         """
 
-        from models import storage
-        if not kwargs:
-            self.id = str(uuid4())
-            self.created_at = self.updated_at = datetime.now()
-            storage.new(self)
+        if kwargs is not None and kwargs != {}:
+            for key in kwargs:
+                if key == "created_at":
+                    self.__dict__["created_at"] = datetime.strptime(
+                        kwargs["created_at"], "%Y-%m-%dT%H:%M:%S.%f")
+                elif key == "updated_at":
+                    self.__dict__["updated_at"] = datetime.strptime(
+                        kwargs["updated_at"], "%Y-%m-%dT%H:%M:%S.%f")
+                else:
+                    self.__dict__[key] = kwargs[key]
         else:
-            for key, value in kwargs.items():
-                if key != '__class__':
-                    if key in ('created_at', 'updated_at'):
-                        setattr(self, key, datetime.fromisoformat(value))
-                    else:
-                        setattr(self, key, value)
+            self.id = str(uuid.uuid4())
+            self.created_at = datetime.now()
+            self.updated_at = datetime.now()
+            storage.new(self)
+
     def __str__(self):
-        """
-        String Rep of a BaseModel Object
-            Return:
-                string (str): string descriptor for BaseModel Class
-        """
-        return "[{}] ({}) {}".format(type(self).__name__, self.id,
-                                     self.__dict__)
+        """Returns a human-readable string representation
+        of an instance."""
+
+        return "[{}] ({}) {}".\
+            format(type(self).__name__, self.id, self.__dict__)
 
     def save(self):
-        """
-        updates the public instance attribute updated_at with the
-        current datetime
-        """
+        """Updates the updated_at attribute
+        with the current datetime."""
 
-        from models import storage
         self.updated_at = datetime.now()
         storage.save()
 
     def to_dict(self):
-        """returns a dictionary containing all keys/values of __dict__
-        of the instance
-        Return:
-            dictionary (dict): Dictionary object that contains __dict__
-        """
+        """Returns a dictionary representation of an instance."""
 
-        dict_1 = self.__dict__.copy()
-        dict_1["__class__"] = self.__class__.__name__
-        for k, v in self.__dict__.items():
-            if k in ("created_at", "updated_at"):
-                v = self.__dict__[k].isoformat()
-                dict_1[k] = v
-        retuen dict_1
+        my_dict = self.__dict__.copy()
+        my_dict["__class__"] = type(self).__name__
+        my_dict["created_at"] = my_dict["created_at"].isoformat()
+        my_dict["updated_at"] = my_dict["updated_at"].isoformat()
+        return my_dict
