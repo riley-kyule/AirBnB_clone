@@ -1,165 +1,52 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Nov 29 21:29:02 2022
-@author: Biruke sisay
-         Phillip kyuel
-"""
-import sys
+"""Unittest module for the State Class."""
+
 import unittest
-import inspect
-import io
-import pep8
 from datetime import datetime
-from contextlib import redirect_stdout
+import time
 from models.state import State
+import re
+import json
+from models.engine.file_storage import FileStorage
+import os
+from models import storage
+from models.base_model import BaseModel
 
 
 class TestState(unittest.TestCase):
-    """
-    class for testing State class' methods
-    """
 
-    @classmethod
-    def setUpClass(cls):
-        """
-        Set up class method for the doc tests
-        """
-        cls.setup = inspect.getmembers(State, inspect.isfunction)
-
-    def test_pep8_conformance_State(self):
-        """
-        Test that state.py file conform to PEP8
-        """
-        pep8style = pep8.StyleGuide(quiet=True)
-        result = pep8style.check_files(['models/state.py'])
-        self.assertEqual(result.total_errors, 0,
-                         "Found code style errors (and warnings).")
-
-    def test_pep8_conformance_test_state(self):
-        """
-        Test that test_state.py file conform to PEP8
-        """
-        pep8style = pep8.StyleGuide(quiet=True)
-        result = pep8style.check_files(['tests/test_models/test_state.py'])
-        self.assertEqual(result.total_errors, 0,
-                         "Found code style errors (and warnings).")
-
-    def test_module_docstring(self):
-        """
-        Tests if module docstring documentation exist
-        """
-        self.assertTrue(len(State.__doc__) >= 1)
-
-    def test_class_docstring(self):
-        """
-        Tests if class docstring documentation exist
-        """
-        self.assertTrue(len(State.__doc__) >= 1)
-
-    def test_func_docstrings(self):
-        """
-        Tests if methods docstring documntation exist
-        """
-        for func in self.setup:
-            self.assertTrue(len(func[1].__doc__) >= 1)
+    """Test Cases for the State class."""
 
     def setUp(self):
-        """set up method for State class
-        """
-        self.S = State()
+        """Sets up test methods."""
+        pass
 
     def tearDown(self):
-        """initialized method for State class
-        """
-        self.S = None
+        """Tears down test methods."""
+        self.resetStorage()
+        pass
 
-    def test_type(self):
-        """test method for type testing of state
-        """
-        self.assertIsInstance(self.S, State)
-        self.assertEqual(type(self.S), State)
-        self.assertEqual(issubclass(self.S.__class__, State), True)
-        self.assertEqual(isinstance(self.S, State), True)
+    def resetStorage(self):
+        """Resets FileStorage data."""
+        FileStorage._FileStorage__objects = {}
+        if os.path.isfile(FileStorage._FileStorage__file_path):
+            os.remove(FileStorage._FileStorage__file_path)
 
-    def test_name_type(self):
-        """tests the type of state attribute
-        """
-        self.assertEqual(type(State.name), str)
+    def test_8_instantiation(self):
+        """Tests instantiation of State class."""
 
-    def test_string_return(self):
-        """tests the string method
-        """
-        string = str(self.S)
-        Sid = "[{}] ({})".format(self.S.__class__.__name__,
-                                 self.S.id)
-        test = Sid in string
-        self.assertEqual(True, test)
-        test = "updated_at" in string
-        self.assertEqual(True, test)
-        test = "created_at" in string
-        self.assertEqual(True, test)
-        test = "datetime.datetime" in string
-        self.assertEqual(True, test)
+        b = State()
+        self.assertEqual(str(type(b)), "<class 'models.state.State'>")
+        self.assertIsInstance(b, State)
+        self.assertTrue(issubclass(type(b), BaseModel))
 
-    def test_to_dict(self):
-        """tests to_dict method
-        """
-        my_dict = self.S.to_dict()
-        self.assertEqual(str, type(my_dict['created_at']))
-        self.assertEqual(my_dict['created_at'],
-                         self.S.created_at.isoformat())
-        self.assertEqual(datetime, type(self.S.created_at))
-        self.assertEqual(my_dict['__class__'],
-                         self.S.__class__.__name__)
-        self.assertEqual(my_dict['id'], self.S.id)
+    def test_8_attributes(self):
+        """Tests the attributes of State class."""
+        attributes = storage.attributes()["State"]
+        o = State()
+        for k, v in attributes.items():
+            self.assertTrue(hasattr(o, k))
+            self.assertEqual(type(getattr(o, k, None)), v)
 
-    def test_to_dict_more(self):
-        """tests to_dict method
-        """
-        my_dict = self.S.to_dict()
-        created_at = my_dict['created_at']
-        time = datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%S.%f")
-        self.assertEqual(self.S.created_at, time)
-
-    def test_from_dict_basic(self):
-        """tests from_dict method
-        """
-        my_dict = self.S.to_dict()
-        S1 = self.S.__class__(**my_dict)
-        self.assertEqual(S1.id, self.S.id)
-        self.assertEqual(S1.updated_at, self.S.updated_at)
-        self.assertEqual(S1.created_at, self.S.created_at)
-        self.assertEqual(S1.__class__.__name__,
-                         self.S.__class__.__name__)
-
-    def test_from_dict_hard(self):
-        """test from_dict method for class objects
-        """
-        self.S.name = 'Meco'
-        my_dict = self.S.to_dict()
-        self.assertEqual(my_dict['name'], 'Meco')
-        S1 = self.S.__class__(**my_dict)
-        self.assertEqual(S1.created_at, self.S.created_at)
-
-    def test_unique_id(self):
-        """test for unique ids for class objects
-        """
-        S1 = self.S.__class__()
-        S2 = self.S.__class__()
-        self.assertNotEqual(self.S.id, S1.id)
-        self.assertNotEqual(self.S.id, S2.id)
-
-    def test_id_type_string(self):
-        """test id of the class is a string
-        """
-        self.assertEqual(type(self.S.id), str)
-
-    def test_updated_time(self):
-        """test that updated time gets updated
-        """
-        time1 = self.S.updated_at
-        self.S.save()
-        time2 = self.S.updated_at
-        self.assertNotEqual(time1, time2)
-        self.assertEqual(type(time1), datetime)
+if __name__ == "__main__":
+    unittest.main()
